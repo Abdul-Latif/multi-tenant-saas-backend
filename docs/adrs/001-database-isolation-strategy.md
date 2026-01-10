@@ -1,0 +1,79 @@
+# ADR-001: Database Isolation Strategy
+
+
+## Context
+
+I need to choose how to isolate tenant data in a multi-tenant SaaS application. This is the most critical architectural decision as it affects security, scalability, cost, and complexity.
+
+## Options Considered
+
+1. **Database per Tenant**
+2. **Shared Database, Separate Schemas**
+3. **Shared Database, Shared Schema with tenant_id column**
+
+## Decision
+
+**Chosen**: Shared Database with Shared Schema + Row-Level Security (RLS)
+
+## Rationale
+
+### Why this approach for learning:
+- **Teaches the most**: This is the most challenging approach, requiring careful design and discipline
+- **Most scalable**: Can handle thousands of tenants without infrastructure explosion
+- **Cost-effective**: Single database means lower infrastructure costs
+- **Industry standard**: Used by companies like Slack, GitHub, Salesforce
+- **Forces good habits**: Must think about tenant isolation in every query
+
+### Technical benefits:
+- Easy schema migrations (apply once, affects all tenants)
+- Cross-tenant analytics possible
+- Simpler backup and restore
+- Better resource utilization
+
+### How we'll mitigate the risks:
+- **PostgreSQL RLS**: Database-level enforcement of tenant boundaries
+- **Application guards**: NestJS guards on every route
+- **Query scoping**: Custom TypeORM utilities that always include tenant_id
+- **Extensive testing**: E2E tests that try to break tenant isolation
+- **Code reviews**: Checklist to verify tenant filtering
+
+## Consequences
+
+### Positive:
+- Learn production-grade multi-tenant patterns
+- Build a scalable architecture
+- Force myself to write security-conscious code
+- Portfolio project that demonstrates advanced skills
+
+### Negative:
+- More complex to implement correctly
+- Requires constant vigilance about tenant filtering
+- Performance considerations for large tenants
+- More testing needed to ensure isolation
+
+### Risks & Mitigations:
+
+| Risk | Mitigation |
+|------|-----------|
+| Forgetting to filter by tenant_id | PostgreSQL RLS blocks unauthorized queries |
+| One tenant slows down others | Implement per-tenant rate limiting + monitoring |
+| Data leak due to bug | Multiple layers of defense + comprehensive tests |
+| Complex debugging | Add tenant_id to all logs, use request tracing |
+
+## Implementation Notes
+
+### Must implement:
+1. RLS policies on all tenant-scoped tables
+2. Tenant context middleware in NestJS
+3. TypeORM base entity with automatic tenant scoping
+4. Guards to reject requests without valid tenant context
+5. Tests that verify isolation
+
+### Will defer:
+- Tenant-specific sharding (for when we outgrow single DB)
+- Advanced monitoring and alerting
+- Tenant-specific customization features
+
+## Review & Lessons Learned
+
+[Will update after implementation]

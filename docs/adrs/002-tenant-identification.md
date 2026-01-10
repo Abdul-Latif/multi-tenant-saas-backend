@@ -1,0 +1,56 @@
+# ADR-002: Tenant Identification Method
+
+## Context
+
+The system needs to identify which tenant is making each request to properly isolate data and enforce rate limits.
+
+## Options Considered
+
+1. **Subdomain routing** (tenant1.myapp.com, tenant2.myapp.com)
+2. **Path-based routing** (/api/tenant1/..., /api/tenant2/...)
+3. **API Key in header** (X-Tenant-ID: tenant_123)
+4. **JWT with embedded tenant_id**
+
+## Decision
+
+**Chosen**: JWT with embedded tenant_id
+
+## Rationale
+
+- **Already needed for auth**: We need JWTs anyway for user authentication
+- **Secure**: Can't be forged, cryptographically signed
+- **Stateless**: No need to hit database on every request
+- **Standard practice**: Widely used pattern in industry
+- **User-centric**: Tenant is tied to the authenticated user
+
+### JWT Payload Structure:
+```json
+{
+  "user_id": "uuid",
+  "tenant_id": "uuid",
+  "email": "user@company.com",
+  "roles": ["admin"],
+  "iat": 1234567890,
+  "exp": 1234567899
+}
+```
+
+## Consequences
+
+### Implementation:
+- Auth service signs JWTs with tenant_id after user login
+- Auth guard extracts and validates JWT on each request
+- Tenant context middleware adds tenant_id to request object
+- All downstream code can access `req.tenantId`
+
+### Security considerations:
+- User cannot change their tenant_id (cryptographically enforced)
+- Users can only belong to one tenant (for this project)
+- JWT secret must be strong and rotated periodically
+
+## Alternative for Future:
+
+If we need users to switch between tenants:
+- Issue JWTs per tenant
+- User can have multiple valid JWTs
+- Frontend chooses which JWT to send

@@ -140,7 +140,6 @@ NODE_ENV=development
 
 - [Learning Notes](./docs/LEARNING_NOTES.md) - My research and understanding of multi-tenancy
 - [Architecture Decisions](./docs/adrs/) - ADRs documenting key design choices
-- [Case Studies](./docs/CASE_STUDIES.md) - Real-world examples I analyzed
 - [API Documentation](./docs/API.md) - Endpoints and usage (TBD)
 
 ##  Testing
